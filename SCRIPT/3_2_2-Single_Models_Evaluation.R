@@ -7,10 +7,10 @@
 library(gridExtra);library(cowplot);library(ggpubr);library(dplyr); library(biomod2)
 
 # Load, if necessary, the previous model
-(bm_out_file <- load("./Phytophthora/Phytophthora.20240501_1439_25.models.out"))
+# (bm_out_file <- load("./Phytophthora/Phytophthora.20240502_1754_42.models.out"))
 
-myBiomodModelOut <- get(bm_out_file)
-rm(list = c(bm_out_file, 'bm_out_file'))
+# myBiomodModelOut <- get(bm_out_file)
+# rm(list = c(bm_out_file, 'bm_out_file'))
 
 ############################ Get evaluations ###################################
 
@@ -22,10 +22,33 @@ var_imp <- get_variables_importance(myBiomodModelOut)
 # Evaluate presence only models
 evaluations_df <- BIOMOD_PresenceOnly(bm.mod = myBiomodModelOut, 
                                       bg.env = myExpl,
-                                      perc = 0.9)
+                                      perc = 0.8)
 
 # Filtrare il dataframe escludendo le righe con algo = "SRE" o "MAXNET"
 # evaluations_df <- evaluations_df[!(evaluations_df$algo %in% c("SRE", "MAXNET")), ]
+
+################################################
+
+
+library(ggplot2)
+
+# Seleziona solo le righe con la metrica BOYCE
+boyce_df <- subset(evaluations_df, metric.eval == "BOYCE")
+
+library(dplyr)
+
+# Calcola il valore medio della metrica BOYCE per ogni PA
+mean_boyce <- boyce_df %>%
+  group_by(PA) %>%
+  summarize(mean_validation = mean(validation, na.rm = TRUE))
+
+# Traccia un grafico per ogni PA
+ggplot(mean_boyce, aes(x = PA, y = mean_validation, color = algo)) +
+  geom_point() +
+  labs(title = "Valore medio della metrica BOYCE per ogni PA",
+       x = "PA",
+       y = "Valore medio della metrica BOYCE",
+       color = "Algoritmo")
 
 ################################################
 
@@ -70,7 +93,7 @@ for (metric in metrics) {
     } else if (pa == "PA2") {
       pa_df <- pa_df[pa_df$algo %in% c("MARS", "SRE"), ]
     } else if (pa == "PA3") {
-      pa_df <- pa_df[pa_df$algo %in% c("GLM", "GAM", "MAXENT", "MAXNET"), ]
+      pa_df <- pa_df[pa_df$algo %in% c("GLM", "GAM", "MAXENT", "MAXNET", 'GBM'), ]
     }
     
     # Crea il grafico a dispersione con deviazione standard come linea
@@ -79,7 +102,7 @@ for (metric in metrics) {
       geom_line(linewidth = 1) +
       geom_crossbar(aes(ymin = mean_value.x - sd_value.x, ymax = mean_value.x + sd_value.x), width = 0, fatten = 2) +
       geom_crossbar(aes(xmin = mean_value.y - sd_value.y, xmax = mean_value.y + sd_value.y), width = 0, fatten = 2) +
-      labs(x = "ROC", y = "TSS") +
+      labs(x = "MPA", y = "TSS") +
       theme_minimal() +
       facet_wrap(~PA) +
       scale_color_brewer(palette = "Set1") +
@@ -118,19 +141,19 @@ print(final_layout)
 # Represent evaluation scores & variables importance
 bm_PlotEvalMean(bm.out = myBiomodModelOut, 
                 group.by = c('algo'), 
-                dataset = "validation", 
+                dataset = "calibration", 
                 do.plot = TRUE, 
                 xlim = c(0, 1),  # Modifica i limiti dell'asse x
                 ylim = c(0, 1),  # Modifica i limiti dell'asse y
-                main = "Mean Evaluation Scores")  # Modifica il titolo del grafico
+                main = "Mean Evaluation Scores - calibration")  # Modifica il titolo del grafico
 
 bm_PlotEvalMean(bm.out = myBiomodModelOut, 
-                group.by = c('PA'), 
+                group.by = c('algo'), 
                 dataset = "validation", 
                 do.plot = TRUE, 
                 xlim = c(0, 1),  # Modifica i limiti dell'asse x
                 ylim = c(0, 1),  # Modifica i limiti dell'asse y
-                main = "Mean Evaluation Scores")  # Modifica il titolo del grafico
+                main = "Mean Evaluation Scores - validation")  # Modifica il titolo del grafico
 
 bm_PlotEvalBoxplot(bm.out = myBiomodModelOut, 
                    group.by = c('algo', 'PA'), 

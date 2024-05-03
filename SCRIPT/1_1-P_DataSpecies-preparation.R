@@ -10,21 +10,27 @@ library(sf); library(readr); library(spatialsample); library(ggplot2)
 # Load specie occurrences file
 DataSpecies_0 <- st_read("./INPUT/VECTOR/p-psa_adj.gpkg")
 
-absences <- subset(DataSpecies_0, presence == 0)
 DataSpecies <- subset(DataSpecies_0, presence == 1)
 
+# absences <- subset(DataSpecies_0, presence == 0)
+# DataSpecies <- subset(DataSpecies_0, presence == 1)
+
 # Carica il grid A 50 m
-grid <- read_sf("./INPUT/VECTOR/reticolo_50m_mascked.gpkg")
+grid <- read_sf("./INPUT/VECTOR/reticolo_100m.gpkg")
 
 # Intersezione tra i punti di DataSpecies e le celle del raster
 intersection_P <- st_intersection(DataSpecies, grid)
 # Rimuovi i duplicati basati sulle coordinate della cella del raster
 unique_points_P <- intersection_P[!duplicated(intersection_P$id), ]
 
-# Intersezione tra i punti di DataSpecies e le celle del raster
-intersection_A <- st_intersection(absences, grid)
-# Rimuovi i duplicati basati sulle coordinate della cella del raster
-unique_points_A <- intersection_A[!duplicated(intersection_A$id), ]
+# # Intersezione tra i punti di DataSpecies e le celle del raster
+# intersection_A <- st_intersection(absences, grid)
+# # Rimuovi i duplicati basati sulle coordinate della cella del raster
+# unique_points_A <- intersection_A[!duplicated(intersection_A$id), ]
+
+
+plot(unique_points_P$geom, col = "red")
+plot(unique_points_A$geom, col = "green", add = TRUE)
 
 # # Estrai le coordinate x e y
 # x <- st_coordinates(unique_points$geom)[, 1]
@@ -47,7 +53,7 @@ unique_points_A <- intersection_A[!duplicated(intersection_A$id), ]
 
 lim <- read_sf("./INPUT/VECTOR/limite_amministrativo_paulilatino_32632.gpkg")
 
-set.seed(1234)
+set.seed(9999)
 
 #  Separa il  train dal test
 # Create splits
@@ -61,23 +67,27 @@ autoplot(splits)
 
 # Get the Data
 train_data <- analysis(splits$splits[[1]])
-test_data_0 <- assessment(splits$splits[[1]])
+test_data <- assessment(splits$splits[[1]])
+
+plot(train_data$geom, col = "red")
+# plot(test_data_0$geom, col = "green", add = TRUE)
 
 # Unisci i due insiemi di dati
-test_data <- rbind(test_data_0, unique_points_A)
+# test_data <- rbind(test_data_0, unique_points_A)
 
 # Definisci i colori e le etichette per la legenda
-colors <- c("green", "red")
+colors <- c("green", "red")  
 labels <- c("Train Data", "Test Data")
 
 # Crea il grafico e aggiungi i dati
 ggplot() +
   geom_sf(data = lim) +
   geom_sf(data = train_data, aes(color = "Train Data")) +
-  geom_sf(data = test_data, aes(color = "Test Data")) +
-  scale_color_manual(name = "Data",
-                     values = colors,
-                     labels = labels)
+  geom_sf(data = test_data, aes(color = "Test Data"))
+
+plot(lim$geom)
+plot(train_data$geom, col = "green", add = TRUE)
+plot(test_data$geom, col = "red", add = TRUE)
 
 # Save the train
 write_sf(train_data, "./INPUT/VECTOR/train_data.gpkg")

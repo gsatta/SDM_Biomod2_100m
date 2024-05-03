@@ -8,9 +8,11 @@
 library(terra)
 
 # Load the environmental raster  at 50 m of spatial resolution
-myExpl_0 <- rast("./INPUT/RASTER/enviromental_50m.tiff")
+myExpl_0 <- rast("./INPUT/RASTER/environmental_100m_standardized.tiff")
 
 # # Get only the selected variables
-myExpl <- subset(myExpl_0, c("nitrogen", "sand", "fla",
-                             "rivers", "roads", 'aspect',
-                             'BIO16')) 
+myExpl <- subset(myExpl_0, c("soc", "sand", "roads",
+                             "green", "fla", 'rivers')
+                             ) 
+
+

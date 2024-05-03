@@ -8,10 +8,7 @@
 library(terra); library(sf); library(ggplot2); library(gridExtra); library(grid)
 
 # Extract the value of the predictor data where we have the Phytophthora
-myExpl_0 <- rast("./INPUT/RASTER/enviromental_50m.tiff")
-
-# Scale the pH values at the own usual  scale
-myExpl_0$pH <- myExpl_0$pH/10
+myExpl_0 <- rast("./INPUT/RASTER/environmental_100m_standardized.tiff")
 
 # Delete the phytophthora and texture layer
 myExpl_0$phytophthora <- NULL
